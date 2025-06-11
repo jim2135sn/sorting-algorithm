@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sorting Algorithm Demo</title>
+    <style>
+        body {
+            font-family: sans-serif; /* default font should eat my shorts */
+        }
+
+        #container {
+            display: flex;
+            align-items: flex-end;
+            height: 400px;
+        }
+
+        .bar {
+            display: inline-block;
+            background-color: steelblue;
+            flex-shrink: 0;
+        }
+
+        button {
+            cursor: pointer;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+    <input type="text" id="searchBox" placeholder="Search Algorithm"> <!-- tbh this is useless -->
+
+    <div>
+        <label for="numBarsSlider">Number of Bars: <span id="numBarsValue">50</span></label> <!-- I couldnt sleep because of this -->
+        <input type="range" id="numBarsSlider" min="10" max="2000" value="50"> <!-- you can adjust this, but you shouldnt go over 5000, 2000+ is slow on its own -->
+    </div>
+
+    <div>
+        <div id="accuracyProgressBar"></div>
+        <span id="accuracyPercentage">0%</span>
+    </div>
+
+    <div id="container"></div>
+
+    <div>
+        <button onclick="stopSortingProcess()">Stop Sorting</button>
+        <button onclick="generateArray()">Generate New Array</button>
+        <button onclick="bubbleSort()" data-name="Bubble Sort">Bubble Sort</button>
+        <button onclick="selectionSort()" data-name="Selection Sort">Selection Sort</button>
+        <button onclick="insertionSort()" data-name="Insertion Sort">InsertionSort</button>
+        <button onclick="mergeSortWrapper()" data-name="Merge Sort">Merge Sort</button>
+        <button onclick="quickSortWrapper()" data-name="Quick Sort">Quick Sort</button>
+        <button onclick="heapSortWrapper()" data-name="Heap Sort">Heap Sort</button>
+        <button onclick="shellSort()" data-name="Shell Sort">Shell Sort</button>
+        <button onclick="radixSortWrapper()" data-name="Radix Sort">Radix Sort</button>
+        <button onclick="combSort()" data-name="Comb Sort">Comb Sort</button>
+        <button onclick="gnomeSort()" data-name="Gnome Sort">Gnome Sort</button>
+        <button onclick="oddEvenSort()" data-name="Odd-Even Sort">Odd-Even Sort</button>
+        <button onclick="pancakeSortWrapper()" data-name="Pancake Sort">Pancake Sort</button>
+        <button onclick="bogoSort()" data-name="Bogo Sort">Bogo Sort</button>
+        <button onclick="stoogeSortWrapper()" data-name="Stooge Sort">Stooge Sort</button>
+        <button onclick="strandSortWrapper()" data-name="Strand Sort">Strand Sort</button>
+        <button onclick="timSortWrapper()" data-name="Tim Sort">Tim Sort</button>
+    </div>
+    <h1>made by joahtheproto</h1> <!-- wsg chat -->
+    <script>
+        let array = []; 
+        let stopSortingFlag = false; // 
+        let sortedArray = [];
+        const container = document.getElementById('container');
+        const searchBox = document.getElementById('searchBox');
+        const numBarsSlider = document.getElementById('numBarsSlider');
+        const numBarsValueSpan = document.getElementById('numBarsValue');
+        let numBars = parseInt(numBarsSlider.value);
+
+        const accuracyProgressBar = document.getElementById('accuracyProgressBar');
+        const accuracyPercentageSpan = document.getElementById('accuracyPercentage');
+
+        const buttons = document.querySelectorAll('button[data-name]');
+
+        searchBox.addEventListener('keyup', function (e) {
+            const searchTerm = searchBox.value.toLowerCase();
+            buttons.forEach(button => {
+                const buttonName = button.dataset.name.toLowerCase();
+                if (buttonName.includes(searchTerm)) {
+                    button.style.display = 'inline-block';
+                } else {
+                    button.style.display = 'none';
+                }
+            });
+        });
+
+        numBarsSlider.addEventListener('input', function() {
+            numBars = parseInt(this.value);
+            numBarsValueSpan.textContent = numBars;
+            generateArray();
+        });
+
+        function stopSortingProcess() {
+            stopSortingFlag = true;
+        }
+
+        function shuffleArray(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function updateAccuracyMeter() {
+            let correctCount = 0;
+            for (let i = 0; i < array.length; i++) {
+                if (array[i] === (i + 1)) {
+                    correctCount++;
+                }
+            }
+            const accuracy = (correctCount / numBars) * 100;
+            accuracyProgressBar.style.width = `${accuracy}%`;
+            accuracyPercentageSpan.textContent = `${accuracy.toFixed(1)}%`;
+        }
+
+        function generateArray() {
+            stopSortingFlag = false;
+            array = [];
+            container.innerHTML = '';
+            let perfectBase = [];
+            for (let i = 0; i < numBars; i++) {
+                perfectBase.push(i + 1);
+            }
+            sortedArray = [...perfectBase];
+            array = shuffleArray([...perfectBase]);
+            renderBars();
+            updateAccuracyMeter();
+        }
+
+        function renderBars() {
+            container.innerHTML = '';
+            const containerHeight = container.clientHeight;
+            const maxVal = numBars;
+
+            let barWidth;
+            let barMargin = 1;
+
+            if (numBars > 100) {
+                barMargin = 0;
+                barWidth = container.clientWidth / numBars;
+            } else {
+                barWidth = (container.clientWidth / numBars) - (barMargin * 2);
+                barWidth = Math.max(1, barWidth);
+            }
+
+            for (let i = 0; i < array.length; i++) {
+                const bar = document.createElement('div');
+                bar.classList.add('bar');
+                bar.style.height = `${(array[i] / maxVal) * (containerHeight * 0.95)}px`;
+                bar.style.width = `${barWidth}px`;
+                bar.style.margin = `0 ${barMargin}px`;
+                container.appendChild(bar);
+            }
+        }
+
+        async function bubbleSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            for (let i = 0; i < array.length; i++) {
+                if (stopSortingFlag) return;
+                for (let j = 0; j < array.length - i - 1; j++) {
+                    if (stopSortingFlag) return;
+                    bars[j].style.backgroundColor = 'red';
+                    bars[j + 1].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    if (array[j] > array[j + 1]) {
+                        let temp = array[j];
+                        array[j] = array[j + 1];
+                        array[j + 1] = temp;
+                        let tempHeight = bars[j].style.height;
+                        bars[j].style.height = bars[j + 1].style.height;
+                        bars[j + 1].style.height = tempHeight;
+                        updateAccuracyMeter();
+                    }
+                    bars[j].style.backgroundColor = 'steelblue';
+                    bars[j + 1].style.backgroundColor = 'steelblue';
+                }
+                if (stopSortingFlag) return;
+                bars[array.length - i - 1].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function selectionSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            for (let i = 0; i < array.length; i++) {
+                if (stopSortingFlag) return;
+                let min_idx = i;
+                bars[i].style.backgroundColor = 'blue';
+                for (let j = i + 1; j < array.length; j++) {
+                    if (stopSortingFlag) return;
+                    bars[j].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    if (array[j] < array[min_idx]) {
+                        if (min_idx !== i) {
+                            bars[min_idx].style.backgroundColor = 'steelblue';
+                        }
+                        min_idx = j;
+                        bars[min_idx].style.backgroundColor = 'blue';
+                    } else {
+                        bars[j].style.backgroundColor = 'steelblue';
+                    }
+                }
+                if (stopSortingFlag) return;
+                let temp = array[min_idx];
+                array[min_idx] = array[i];
+                array[i] = temp;
+                let tempHeight = bars[min_idx].style.height;
+                bars[min_idx].style.height = bars[i].style.height;
+                bars[i].style.height = tempHeight;
+                updateAccuracyMeter();
+                bars[min_idx].style.backgroundColor = 'steelblue';
+                bars[i].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function insertionSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            for (let i = 1; i < array.length; i++) {
+                if (stopSortingFlag) return;
+                let key = array[i];
+                let j = i - 1;
+                bars[i].style.backgroundColor = 'blue';
+                await new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve();
+                    }, 5)
+                );
+                if (stopSortingFlag) return;
+                while (j >= 0 && array[j] > key) {
+                    if (stopSortingFlag) return;
+                    bars[j].style.backgroundColor = 'red';
+                    bars[j + 1].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    array[j + 1] = array[j];
+                    bars[j + 1].style.height = bars[j].style.height;
+                    bars[j].style.backgroundColor = 'steelblue';
+                    bars[j + 1].style.backgroundColor = 'steelblue';
+                    j = j - 1;
+                    updateAccuracyMeter();
+                }
+                array[j + 1] = key;
+                if (stopSortingFlag) return;
+                bars[j + 1].style.height = `${key / numBars * container.clientHeight * 0.95}px`;
+                bars[i].style.backgroundColor = 'green';
+                updateAccuracyMeter();
+            }
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function mergeSort(arr, l, r) {
+            if (stopSortingFlag) return;
+            if (l >= r) {
+                return;
+            }
+            let m = l + Math.floor((r - l) / 2);
+            await mergeSort(arr, l, m);
+            if (stopSortingFlag) return;
+            await mergeSort(arr, m + 1, r);
+            await merge(arr, l, m, r);
+        }
+
+        async function merge(arr, l, m, r) {
+            let bars = document.querySelectorAll('.bar');
+            let n1 = m - l + 1;
+            let n2 = r - m;
+            let L = new Array(n1);
+            let R = new Array(n2);
+            for (let i = 0; i < n1; i++) {
+                L[i] = arr[l + i];
+            }
+            for (let j = 0; j < n2; j++) {
+                R[j] = arr[m + 1 + j];
+            }
+            let i = 0,
+                j = 0,
+                k = l;
+            while (i < n1 && j < n2) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'red';
+                await new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve();
+                    }, 5)
+                    );
+                if (stopSortingFlag) return;
+                if (L[i] <= R[j]) {
+                    arr[k] = L[i];
+                    bars[k].style.height = `${L[i] / numBars * container.clientHeight * 0.95}px`;
+                    i++;
+                } else {
+                    arr[k] = R[j];
+                    bars[k].style.height = `${R[j] / numBars * container.clientHeight * 0.95}px`;
+                    j++;
+                }
+                bars[k].style.backgroundColor = 'green';
+                updateAccuracyMeter();
+                k++;
+            }
+            while (i < n1) {
+                if (stopSortingFlag) return;
+                arr[k] = L[i];
+                bars[k].style.height = `${L[i] / numBars * container.clientHeight * 0.95}px`;
+                bars[k].style.backgroundColor = 'green';
+                updateAccuracyMeter();
+                i++;
+                k++;
+            }
+            while (j < n2) {
+                if (stopSortingFlag) return;
+                arr[k] = R[j];
+                bars[k].style.height = `${R[j] / numBars * container.clientHeight * 0.95}px`;
+                bars[k].style.backgroundColor = 'green';
+                updateAccuracyMeter();
+                j++;
+                k++;
+            }
+        }
+
+        async function mergeSortWrapper() {
+            stopSortingFlag = false;
+            await mergeSort(array, 0, array.length - 1);
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function quickSort(arr, low, high) {
+            if (stopSortingFlag) return;
+            if (low < high) {
+                let pi = await partition(arr, low, high);
+                if (stopSortingFlag) return;
+                await quickSort(arr, low, pi - 1);
+                if (stopSortingFlag) return;
+                await quickSort(arr, pi + 1, high);
+            }
+        }
+
+        async function partition(arr, low, high) {
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            let pivot = arr[high];
+            bars[high].style.backgroundColor = 'blue';
+            let i = low - 1;
+            for (let j = low; j <= high - 1; j++) {
+                if (stopSortingFlag) return;
+                bars[j].style.backgroundColor = 'red';
+                await new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve();
+                    }, 5)
+                );
+                if (stopSortingFlag) return;
+                if (arr[j] < pivot) {
+                    i++;
+                    let temp = array[i];
+                    array[i] = array[j];
+                    array[j] = temp;
+                    let tempHeight1 = bars[i].style.height;
+                    bars[i].style.height = bars[j].style.height;
+                    bars[j].style.height = tempHeight1;
+                    updateAccuracyMeter();
+                }
+                bars[j].style.backgroundColor = 'steelblue';
+                if (i >= low) {
+                    bars[i].style.backgroundColor = 'steelblue';
+                }
+            }
+            if (stopSortingFlag) return;
+            let temp = array[i + 1];
+            array[i + 1] = array[high];
+            array[high] = temp;
+            let tempHeight2 = bars[i + 1].style.height;
+            bars[i + 1].style.height = bars[high].style.height;
+            bars[high].style.height = tempHeight2;
+            updateAccuracyMeter();
+            bars[high].style.backgroundColor = 'steelblue';
+            bars[i + 1].style.backgroundColor = 'green';
+            return i + 1;
+        }
+
+        async function quickSortWrapper() {
+            stopSortingFlag = false;
+            await quickSort(array, 0, array.length - 1);
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function heapSortWrapper() {
+            stopSortingFlag = false;
+            await heapSort();
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function heapSort() {
+            let n = array.length;
+            for (let i = Math.floor(n / 2) - 1; i >= 0; i--)
+                await heapify(array, n, i);
+            for (let i = n - 1; i > 0; i--) {
+                let temp = array[0];
+                array[0] = array[i];
+                array[i] = temp;
+                let bars = document.querySelectorAll('.bar');
+                let tempHeight = bars[0].style.height;
+                bars[0].style.height = bars[i].style.height;
+                bars[i].style.height = tempHeight;
+                updateAccuracyMeter();
+                if (stopSortingFlag) return;
+                await heapify(array, i, 0);
+            }
+        }
+
+        async function heapify(arr, n, i) {
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            let largest = i;
+            let l = 2 * i + 1;
+            let r = 2 * i + 2;
+            if (l < n && arr[l] > arr[largest])
+                largest = l;
+            if (r < n && arr[r] > arr[largest])
+                largest = r;
+            if (largest != i) {
+                let temp = array[i];
+                array[i] = array[largest];
+                array[largest] = temp;
+                let tempHeight = bars[i].style.height;
+                bars[i].style.height = bars[largest].style.height;
+                bars[largest].style.height = tempHeight;
+                updateAccuracyMeter();
+                await new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve();
+                    }, 5)
+                );
+                if (stopSortingFlag) return;
+                await heapify(arr, n, largest);
+            }
+        }
+
+        async function shellSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            let n = array.length;
+            for (let gap = Math.floor(n / 2); gap > 0; gap = Math.floor(gap / 2)) {
+                if (stopSortingFlag) return;
+                for (let i = gap; i < n; i += 1) {
+                    if (stopSortingFlag) return;
+                    let temp = array[i];
+                    let j;
+                    for (j = i; j >= gap && array[j - gap] > temp; j -= gap) {
+                        if (stopSortingFlag) return;
+                        bars[j].style.backgroundColor = 'red';
+                        bars[j - gap].style.backgroundColor = 'red';
+                        await new Promise((resolve) =>
+                            setTimeout(() => {
+                                resolve();
+                            }, 5)
+                        );
+                        if (stopSortingFlag) return;
+                        array[j] = array[j - gap];
+                        bars[j].style.height = bars[j - gap].style.height;
+                        bars[j].style.backgroundColor = 'steelblue';
+                        bars[j - gap].style.backgroundColor = 'steelblue';
+                        updateAccuracyMeter();
+                    }
+                    array[j] = temp;
+                    bars[j].style.height = `${temp / numBars * container.clientHeight * 0.95}px`;
+                }
+            }
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function radixSortWrapper() {
+            stopSortingFlag = false;
+            await radixSort();
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function radixSort() {
+            let bars = document.querySelectorAll('.bar');
+            let max = Math.max(...array);
+            for (let exp = 1; Math.floor(max / exp) > 0; exp *= 10) {
+                if (stopSortingFlag) return;
+                await countingSortForRadix(array, exp);
+            }
+            async function countingSortForRadix(arr, exp) {
+                if (stopSortingFlag) return;
+                let n = arr.length;
+                let output = new Array(n).fill(0);
+                let count = new Array(10).fill(0);
+                for (let i = 0; i < n; i++) {
+                    count[Math.floor(arr[i] / exp) % 10]++;
+                }
+                for (let i = 1; i < 10; i++) {
+                    count[i] += count[i - 1];
+                }
+                for (let i = n - 1; i >= 0; i--) {
+                    output[count[Math.floor(arr[i] / exp) % 10] - 1] = arr[i];
+                    count[Math.floor(arr[i] / exp) % 10]--;
+                }
+                for (let i = 0; i < n; i++) {
+                    if (stopSortingFlag) return;
+                    arr[i] = output[i];
+                    bars[i].style.height = `${arr[i] / numBars * container.clientHeight * 0.95}px`;
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    updateAccuracyMeter();
+                }
+            }
+        }
+
+        async function combSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            let n = array.length;
+            let gap = n;
+            let swapped = true;
+            while (gap != 1 || swapped == true) {
+                if (stopSortingFlag) return;
+                gap = parseInt((gap * 10) / 13, 10);
+                if (gap < 1)
+                    gap = 1;
+                swapped = false;
+                for (let i = 0; i < n - gap; i++) {
+                    if (stopSortingFlag) return;
+                    bars[i].style.backgroundColor = 'red';
+                    bars[i + gap].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    if (array[i] > array[i + gap]) {
+                        let temp = array[i];
+                        array[i] = array[i + gap];
+                        array[i + gap] = temp;
+                        let tempHeight = bars[i].style.height;
+                        bars[i].style.height = bars[i + gap].style.height;
+                        bars[i + gap].style.height = tempHeight;
+                        swapped = true;
+                        updateAccuracyMeter();
+                    }
+                    bars[i].style.backgroundColor = 'steelblue';
+                    bars[i + gap].style.backgroundColor = 'steelblue';
+                }
+            }
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function gnomeSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            let index = 0;
+            let n = array.length;
+            while (index < n) {
+                if (stopSortingFlag) return;
+                if (index == 0)
+                    index++;
+                if (index >= n) break;
+                bars[index].style.backgroundColor = 'red';
+                bars[index - 1].style.backgroundColor = 'red';
+                await new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve();
+                    }, 5)
+                );
+                if (stopSortingFlag) return;
+                if (array[index] >= array[index - 1]) {
+                    bars[index].style.backgroundColor = 'steelblue';
+                    bars[index - 1].style.backgroundColor = 'steelblue';
+                    index++;
+                } else {
+                    let temp = array[index];
+                    array[index] = array[index - 1];
+                    array[index - 1] = temp;
+                    let tempHeight = bars[index].style.height;
+                    bars[index].style.height = bars[index - 1].style.height;
+                    bars[index - 1].style.height = tempHeight;
+                    bars[index].style.backgroundColor = 'steelblue';
+                    bars[index - 1].style.backgroundColor = 'steelblue';
+                    index--;
+                    updateAccuracyMeter();
+                }
+            }
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function oddEvenSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            let n = array.length;
+            let sorted = false;
+            while (!sorted) {
+                if (stopSortingFlag) return;
+                sorted = true;
+                for (let i = 1; i <= n - 2; i = i + 2) {
+                    if (stopSortingFlag) return;
+                    bars[i].style.backgroundColor = 'red';
+                    bars[i + 1].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    if (array[i] > array[i + 1]) {
+                        let temp = array[i];
+                        array[i] = array[i + 1];
+                        array[i + 1] = temp;
+                        let tempHeight = bars[i].style.height;
+                        bars[i].style.height = bars[i + 1].style.height;
+                        bars[i + 1].style.height = tempHeight;
+                        sorted = false;
+                        updateAccuracyMeter();
+                    }
+                    bars[i].style.backgroundColor = 'steelblue';
+                    bars[i + 1].style.backgroundColor = 'steelblue';
+                }
+                for (let i = 0; i <= n - 2; i = i + 2) {
+                    if (stopSortingFlag) return;
+                    bars[i].style.backgroundColor = 'red';
+                    bars[i + 1].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    if (array[i] > array[i + 1]) {
+                        let temp = array[i];
+                        array[i] = array[i + 1];
+                        array[i + 1] = temp;
+                        let tempHeight = bars[i].style.height;
+                        bars[i].style.height = bars[i + 1].style.height;
+                        bars[i + 1].style.height = tempHeight;
+                        sorted = false;
+                        updateAccuracyMeter();
+                    }
+                    bars[i].style.backgroundColor = 'steelblue';
+                    bars[i + 1].style.backgroundColor = 'steelblue';
+                }
+            }
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function pancakeSortWrapper() {
+            stopSortingFlag = false;
+            await pancakeSort();
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function pancakeSort() {
+            let bars = document.querySelectorAll('.bar');
+            let n = array.length;
+            for (let curr_size = n; curr_size > 1; curr_size--) {
+                if (stopSortingFlag) return;
+                let mi = 0;
+                for (let i = 0; i < curr_size; ++i) {
+                    if (array[i] > array[mi])
+                        mi = i;
+                }
+                if (mi != curr_size - 1) {
+                    if (stopSortingFlag) return;
+                    await flip(mi);
+                    if (stopSortingFlag) return;
+                    await flip(curr_size - 1);
+                }
+            }
+            async function flip(i) {
+                if (stopSortingFlag) return;
+                let start = 0;
+                while (start < i) {
+                    bars[start].style.backgroundColor = 'red';
+                    bars[i].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    let temp = array[start];
+                    array[start] = array[i];
+                    array[i] = temp;
+                    let tempHeight = bars[start].style.height;
+                    bars[start].style.height = bars[i].style.height;
+                    bars[i].style.height = tempHeight;
+                    bars[start].style.backgroundColor = 'steelblue';
+                    bars[i].style.backgroundColor = 'steelblue';
+                    start++;
+                    i--;
+                    updateAccuracyMeter();
+                }
+            }
+        }
+
+        async function bogoSort() {
+            stopSortingFlag = false;
+            let bars = document.querySelectorAll('.bar');
+            let n = array.length;
+            let maxIterations = 100000;
+            let iterations = 0;
+            while (!isSorted(array) && iterations < maxIterations) {
+                if (stopSortingFlag) return;
+                await shuffle(array);
+                renderBars();
+                updateAccuracyMeter();
+                await new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve();
+                    }, 100)
+                );
+                if (stopSortingFlag) return;
+                iterations++;
+            }
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+
+            function isSorted(arr) {
+                for (let i = 1; i < arr.length; i++) {
+                    if (arr[i - 1] > arr[i])
+                        return false;
+                }
+                return true;
+            }
+
+            async function shuffle(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+            }
+        }
+
+        async function stoogeSort(arr, l, h) {
+            if (stopSortingFlag) return;
+            if (l >= h)
+                return;
+            let bars = document.querySelectorAll('.bar');
+            if (arr[l] > arr[h]) {
+                if (stopSortingFlag) return;
+                bars[l].style.backgroundColor = 'red';
+                bars[h].style.backgroundColor = 'red';
+                await new Promise((resolve) =>
+                    setTimeout(() => {
+                        resolve();
+                    }, 5)
+                );
+                if (stopSortingFlag) return;
+                let temp = array[l];
+                array[l] = array[h];
+                array[h] = temp;
+                let tempHeight = bars[l].style.height;
+                bars[l].style.height = bars[h].style.height;
+                bars[h].style.height = tempHeight;
+                bars[l].style.backgroundColor = 'steelblue';
+                bars[h].style.backgroundColor = 'steelblue';
+                updateAccuracyMeter();
+            }
+            if (h - l + 1 > 2) {
+                if (stopSortingFlag) return;
+                let t = Math.floor((h - l + 1) / 3);
+                await stoogeSort(arr, l, h - t);
+                if (stopSortingFlag) return;
+                await stoogeSort(arr, l + t, h);
+                if (stopSortingFlag) return;
+                await stoogeSort(arr, l, h - t);
+            }
+        }
+
+        async function stoogeSortWrapper() {
+            stopSortingFlag = false;
+            await stoogeSort(array, 0, array.length - 1);
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function strandSortWrapper() {
+            stopSortingFlag = false;
+            let originalArray = [...array];
+            let result = await strandSortAlgorithm(originalArray);
+            if (stopSortingFlag) return;
+            array = result;
+            renderBars();
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function strandSortAlgorithm(inputArray) {
+            if (!Array.isArray(inputArray) || inputArray.length === 0) {
+                return [];
+            }
+            let result = [];
+            let ip = [...inputArray];
+            while (ip.length > 0) {
+                if (stopSortingFlag) return [];
+                let sublist = [ip.shift()];
+                for (let i = 0; i < ip.length;) {
+                    if (stopSortingFlag) return result;
+                    if (sublist[sublist.length - 1] <= ip[i]) {
+                        sublist.push(ip.splice(i, 1)[0]);
+                    } else {
+                        i++;
+                    }
+                }
+                result = await mergeStrands(result, sublist);
+                if (stopSortingFlag) return result;
+                array = [...result, ...ip];
+                renderBars();
+                updateAccuracyMeter();
+                await new Promise(resolve => setTimeout(resolve, 50));
+                if (stopSortingFlag) return result;
+            }
+            return result;
+        }
+
+        async function mergeStrands(arr1, arr2) {
+            let merged = [];
+            let i = 0,
+                j = 0;
+            while (i < arr1.length && j < arr2.length) {
+                if (arr1[i] <= arr2[j]) {
+                    merged.push(arr1[i++]);
+                } else {
+                    merged.push(arr2[j++]);
+                }
+            }
+            while (i < arr1.length) {
+                merged.push(arr1[i++]);
+            }
+            while (j < arr2.length) {
+                merged.push(arr2[j++]);
+            }
+            return merged;
+        }
+
+        async function timSortWrapper() {
+            stopSortingFlag = false;
+            await timSort(array);
+            if (stopSortingFlag) return;
+            let bars = document.querySelectorAll('.bar');
+            for (let k = 0; k < bars.length; k++) {
+                if (stopSortingFlag) return;
+                bars[k].style.backgroundColor = 'green';
+            }
+            updateAccuracyMeter();
+        }
+
+        async function timSort(arr) {
+            let n = arr.length;
+            let bars = document.querySelectorAll('.bar');
+            const RUN = 32;
+            for (let i = 0; i < n; i += RUN) {
+                if (stopSortingFlag) return;
+                await insertionSortTim(arr, i, Math.min((i + RUN - 1), (n - 1)));
+            }
+            for (let size = RUN; size < n; size = 2 * size) {
+                if (stopSortingFlag) return;
+                for (let left = 0; left < n; left += 2 * size) {
+                    if (stopSortingFlag) return;
+                    let mid = left + size - 1;
+                    let right = Math.min((left + 2 * size - 1), (n - 1));
+                    if (mid < right) {
+                        if (stopSortingFlag) return;
+                        await mergeTim(arr, left, mid, right);
+                    }
+                }
+            }
+            async function insertionSortTim(arr, left, right) {
+                if (stopSortingFlag) return;
+                for (let i = left + 1; i <= right; i++) {
+                    let temp = array[i];
+                    let j = i - 1;
+                    while (j >= left && array[j] > temp) {
+                        bars[j + 1].style.backgroundColor = 'red';
+                        bars[j].style.backgroundColor = 'red';
+                        await new Promise((resolve) =>
+                            setTimeout(() => {
+                                resolve();
+                            }, 5)
+                        );
+                        if (stopSortingFlag) return;
+                        array[j + 1] = array[j];
+                        bars[j + 1].style.height = bars[j].style.height;
+                        bars[j + 1].style.backgroundColor = 'steelblue';
+                        bars[j].style.backgroundColor = 'steelblue';
+                        j--;
+                        updateAccuracyMeter();
+                    }
+                    array[j + 1] = temp;
+                    if (stopSortingFlag) return;
+                    bars[j + 1].style.height = `${temp / numBars * container.clientHeight * 0.95}px`;
+                    bars[j + 1].style.backgroundColor = 'green';
+                }
+            }
+
+            async function mergeTim(arr, l, m, r) {
+                if (stopSortingFlag) return;
+                let len1 = m - l + 1,
+                    len2 = r - m;
+                let left = new Array(len1);
+                let right = new Array(len2);
+                for (let i = 0; i < len1; i++)
+                    left[i] = arr[l + i];
+                for (let i = 0; i < len2; i++)
+                    right[i] = arr[m + 1 + i];
+                let i = 0,
+                    j = 0,
+                    k = l;
+                while (i < len1 && j < len2) {
+                    if (stopSortingFlag) return;
+                    bars[k].style.backgroundColor = 'red';
+                    await new Promise((resolve) =>
+                        setTimeout(() => {
+                            resolve();
+                        }, 5)
+                    );
+                    if (stopSortingFlag) return;
+                    if (left[i] <= right[j]) {
+                        arr[k] = left[i];
+                        bars[k].style.height = `${left[i] / numBars * container.clientHeight * 0.95}px`;
+                        i++;
+                    } else {
+                        arr[k] = right[j];
+                        bars[k].style.height = `${right[j] / numBars * container.clientHeight * 0.95}px`;
+                        j++;
+                    }
+                    bars[k].style.backgroundColor = 'green';
+                    updateAccuracyMeter();
+                    k++;
+                }
+                while (i < len1) {
+                    if (stopSortingFlag) return;
+                    arr[k] = left[i];
+                    bars[k].style.height = `${left[i] / numBars * container.clientHeight * 0.95}px`;
+                    bars[k].style.backgroundColor = 'green';
+                    updateAccuracyMeter();
+                    i++;
+                    k++;
+                }
+                while (j < len2) {
+                    if (stopSortingFlag) return;
+                    arr[k] = right[j];
+                    bars[k].style.height = `${right[j] / numBars * container.clientHeight * 0.95}px`;
+                    bars[k].style.backgroundColor = 'green';
+                    updateAccuracyMeter();
+                    j++;
+                    k++;
+                }
+            }
+        }
+        generateArray();
+    </script>
+</body>
+</html>
