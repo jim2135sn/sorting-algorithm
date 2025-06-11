@@ -4,7 +4,7 @@
     <title>Sorting Algorithm Demo</title>
     <style>
         body {
-            font-family: sans-serif; /* default font should eat my shorts */
+            font-family: sans-serif;
         }
 
         #container {
@@ -26,10 +26,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body>
-    <input type="text" id="searchBox" placeholder="Search Algorithm"> <!-- tbh this is useless -->
+    <input type="text" id="searchBox" placeholder="Search Algorithm">
 
     <div>
-        <label for="numBarsSlider">Number of Bars: <span id="numBarsValue">50</span></label> <!-- I couldnt sleep because of this -->
+        <label for="numBarsSlider">Number of Bars: <span id="numBarsValue">50</span></label>
         <input type="range" id="numBarsSlider" min="10" max="2000" value="50"> <!-- you can adjust this, but you shouldnt go over 5000, 2000+ is slow on its own -->
     </div>
 
@@ -63,7 +63,7 @@
     <h1>made by joahtheproto</h1> <!-- wsg chat -->
     <script>
         let array = []; 
-        let stopSortingFlag = false; // 
+        let stopSortingFlag = false;
         let sortedArray = [];
         const container = document.getElementById('container');
         const searchBox = document.getElementById('searchBox');
@@ -158,8 +158,8 @@
             }
         }
 
-        async function bubbleSort() {
-            stopSortingFlag = false;
+        async function bubbleSort() {  // WARNING: I did NOT create any of these nor did I manually write them in here. I thank diptangsu for that (https://github.com/diptangsu/Sorting-Algorithms/blob/master/JavaScript/InsertionSort.js)
+            stopSortingFlag = false;   // oh also a friend helped make some of it too.
             let bars = document.querySelectorAll('.bar');
             for (let i = 0; i < array.length; i++) {
                 if (stopSortingFlag) return;
